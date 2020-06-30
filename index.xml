@@ -7,4 +7,6 @@
 多集群部署 上面说到了多集群的主要使用场景，多集群可以解决很多问题，但是它本身带来的一个问题就是运维复杂性。对于单个集群来说，部署、更新应用都非常简单直白，直接更新集群上的 yaml 即可。多个集群下，虽然可以挨个集群更新，但如何保证不同集群的应用负载状态一致？如何在不同集群间做服务发现？如何做集群间的负载均衡？社区给出的答案是联邦集群 (Federation)。
 Federation v1
 Federation 方案经历了两个版本，最早的 v1 版本已经废弃。在 v1 版本中，整体架构与 Kubernetes 自身的架构非常相似，在管理的各个集群之前引入了 Federated APIServer 用来接收创建多集群部署的请求，在控制平面的 Federation Controller Manager 负责将对应的负载创建到各个集群上。
-apiVersion: extensions/v1beta1 kind: ReplicaSet metadata: name: nginx-us annotations: federation.kubernetes.io/replica-set-preferences: | { &amp;#34;rebalance&amp;#34;: true, &amp;#34;clusters&amp;#34;: { &amp;#34;us-east1-b&amp;#34;: { &amp;#34;minReplicas&amp;#34;: 2, &amp;#34;maxReplicas&amp;#34;: 4, &amp;#34;weight&amp;#34;: 1 }, &amp;#34;us-central1-b&amp;#34;: { &amp;#34;minReplicas&amp;#34;: 2, &amp;#34;maxReplicas&amp;#34;: 4, &amp;#34;weight&amp;#34;: 1 } } } spec: replicas: 4 template: metadata: labels: region: nginx-us spec: containers: - name: nginx image: nginx:1.</description></item></channel></rss>
+在API层面上，联邦资源的调度通过 annotation 实现，最大程度地保持与原有 Kubernetes API的兼容，这样的好处是可以复用现有的代码，用户已有的部署文件也不需要做太大改动即可迁移过来。但这也是制约 Federation 进一步的发展，无法很好地对 API 进行演进，同时对于每一种联邦资源，需要有对应的 Controller 来实现多集群的调度，早期的 Federation 只支持有限的几种资源类型。
+Federation v2
+社区在 v1 的基础上发展出了 Federation v2，即 Kubefed。Kubefed 使用 Kubernetes 已经相对成熟的 CRD 定义一套自己的 API 规范，抛弃了之前使用的 annotation 方式。架构上也较之前有很大改变，放弃了之前需要独立部署的 Federated APIServer/ETCD，Kubefed 的控制平面采用了流行的 CRD + Controller 的实现方式，可以直接安装在现有的 Kubernetes 集群上，无需额外的部署。</description></item></channel></rss>
